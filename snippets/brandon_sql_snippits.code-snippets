@@ -1,0 +1,104 @@
+{
+	// Place your snippets for sql here. Each snippet is defined under a snippet name and has a prefix, body and 
+	// description. The prefix is what is used to trigger the snippet and the body will be expanded and inserted. Possible variables are:
+	// $1, $2 for tab stops, $0 for the final cursor position, and ${1:label}, ${2:another} for placeholders. Placeholders with the 
+	// same ids are connected.
+	"sp_depends": {
+		"prefix": "spdepends",
+		"body": "SELECT * FROM sys.dm_sql_referencing_entities ('xxxxx', 'OBJECT')\r\nSELECT * FROM sys.dm_sql_referenced_entities ('xxxxx', 'OBJECT')",
+		"description": "sp_depends alternative"
+	},
+	"sp_helptext": {
+		"prefix": "sphelp",
+		"body": "sp_helptext 'xxxxx'",
+		"description": "sp_helptext"
+	},
+	"count": {
+		"prefix": "count",
+		"body": "SELECT COUNT(*)\r\nFROM ",
+		"description": "Count snipet"
+	},
+	"decdate": {
+		"prefix": "decdate",
+		"body": "DECLARE @# DATETIME",
+		"description": "Declare DATETIME variable"
+	},
+	"decint": {
+		"prefix": "decint",
+		"body": "DECLARE @# INT",
+		"description": "Declare INT variable"
+	},
+	"dectable": {
+		"prefix": "dectable",
+		"body": "DECLARE @# TABLE (\r\n)",
+		"description": "Declare Table variable"
+	},
+	"decvchar": {
+		"prefix": "decvchar",
+		"body": "DECLARE @# VARCHAR(256)",
+		"description": "Declare VarChar variable"
+	},
+	"groupby": {
+		"prefix": "g",
+		"body": "GROUP BY",
+		"description": "Group By Snippet"
+	},
+	"innerjoin": {
+		"prefix": "ij",
+		"body": "INNER JOIN # ON ",
+		"description": "Inner join Snippet"
+	},
+	"leftjoin":
+	{
+		"prefix": "lj",
+		"body": "LEFT OUTER JOIN # ON ",
+		"description": "Left Outer join Snippet"
+	},
+	"rightjoin":
+	{
+		"prefix": "rj",
+		"body": "RIGHT OUTER JOIN # ON ",
+		"description": "Right Outer Join Snippet"
+	},
+	"unionall":
+	{
+		"prefix": "unionall",
+		"body": "UNION ALL\r\n",
+		"description": "Union All Snippet"
+	},
+	"like": {
+		"prefix": "l",
+		"body": "LIKE '%#%'",
+		"description": "Like Snippet"
+	},
+	"withNolock": {
+		"prefix": "wnl",
+		"body": "WITH (NOLOCK)",
+		"description": "WITH (NOLOCK) Snippet"
+	},
+	"orderbyasc": {
+		"prefix": "orderbyasc",
+		"body": "ORDER BY # ASC",
+		"description": "ORDER BY ASC Snippet"
+	},
+	"orderbydec": {
+		"prefix": "orderbydec",
+		"body": "ORDER BY # DESC",
+		"description": "ORDER BY DESC Snippet"
+	},
+	"tran": {
+		"prefix": "tran",
+		"body": "BEGIN TRAN\r\n\r\n#\r\n\r\nROLLBACK TRAN\r\n--COMMIT TRAN\r\n\r\nDBCC OPENTRAN",
+		"description": "Begin Tran Snippet"
+	},
+	"who3": {
+		"prefix": "who3",
+		"body": "SELECT\r\n    SPID                = er.session_id\r\n    ,BlkBy              = CASE WHEN lead_blocker = 1 THEN -1 ELSE er.blocking_session_id END\r\n    ,ElapsedMS          = er.total_elapsed_time\r\n    ,CPU                = er.cpu_time\r\n    ,IOReads            = er.logical_reads + er.reads\r\n    ,IOWrites           = er.writes     \r\n    ,Executions         = ec.execution_count  \r\n    ,CommandType        = er.command         \r\n    ,LastWaitType       = er.last_wait_type    \r\n    ,ObjectName         = OBJECT_SCHEMA_NAME(qt.objectid,dbid) + '.' + OBJECT_NAME(qt.objectid, qt.dbid)  \r\n    ,SQLStatement       =\r\n        SUBSTRING\r\n        (\r\n            qt.text,\r\n            er.statement_start_offset/2,\r\n            (CASE WHEN er.statement_end_offset = -1\r\n                THEN LEN(CONVERT(nvarchar(MAX), qt.text)) * 2\r\n                ELSE er.statement_end_offset\r\n                END - er.statement_start_offset)/2\r\n        )        \r\n    ,STATUS             = ses.STATUS\r\n    ,[Login]            = ses.login_name\r\n    ,Host               = ses.host_name\r\n    ,DBName             = DB_Name(er.database_id)\r\n    ,StartTime          = er.start_time\r\n    ,Protocol           = con.net_transport\r\n    ,transaction_isolation =\r\n        CASE ses.transaction_isolation_level\r\n            WHEN 0 THEN 'Unspecified'\r\n            WHEN 1 THEN 'Read Uncommitted'\r\n            WHEN 2 THEN 'Read Committed'\r\n            WHEN 3 THEN 'Repeatable'\r\n            WHEN 4 THEN 'Serializable'\r\n            WHEN 5 THEN 'Snapshot'\r\n        END\r\n    ,ConnectionWrites   = con.num_writes\r\n    ,ConnectionReads    = con.num_reads\r\n    ,ClientAddress      = con.client_net_address\r\n    ,Authentication     = con.auth_scheme\r\n    ,DatetimeSnapshot   = GETDATE()\r\n    ,plan_handle        = er.plan_handle\r\nFROM sys.dm_exec_requests er\r\nLEFT JOIN sys.dm_exec_sessions ses\r\nON ses.session_id = er.session_id\r\nLEFT JOIN sys.dm_exec_connections con\r\nON con.session_id = ses.session_id\r\nOUTER APPLY sys.dm_exec_sql_text(er.sql_handle) AS qt\r\nOUTER APPLY \r\n(\r\n    SELECT execution_count = MAX(cp.usecounts)\r\n    FROM sys.dm_exec_cached_plans cp\r\n    WHERE cp.plan_handle = er.plan_handle\r\n) ec\r\nOUTER APPLY\r\n(\r\n    SELECT\r\n        lead_blocker = 1\r\n    FROM master.dbo.sysprocesses sp\r\n    WHERE sp.spid IN (SELECT blocked FROM master.dbo.sysprocesses)\r\n    AND sp.blocked = 0\r\n    AND sp.spid = er.session_id\r\n) lb\r\nWHERE er.sql_handle IS NOT NULL\r\nAND er.session_id != @@SPID\r\nORDER BY\r\n    CASE WHEN lead_blocker = 1 THEN -1 * 1000 ELSE -er.blocking_session_id END,\r\n    er.blocking_session_id DESC,\r\n    er.logical_reads + er.reads DESC,\r\n    er.session_id",
+		"description": "Who3 Snippet"
+	},
+	"select": {
+		"prefix": "ssf",
+		"body": "SELECT * FROM ",
+		"description": "Select * From"
+	},
+}
